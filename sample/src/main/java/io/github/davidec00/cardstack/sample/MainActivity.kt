@@ -39,9 +39,7 @@ class MainActivity : AppCompatActivity(){
 
         setContent {
             CardStack(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
+                modifier = Modifier,
                 enableButtons = true,
                 items = items
             )

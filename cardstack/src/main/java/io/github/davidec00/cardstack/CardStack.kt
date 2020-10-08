@@ -64,13 +64,16 @@ fun CardStack(modifier : Modifier = Modifier,
         onEmptyStack( items.last() )
     }
 
-    InvertedColumn(modifier = modifier) {
+    ConstraintLayout(modifier = modifier.fillMaxSize().padding(20.dp)) {
+        val (buttons, stack) = createRefs()
 
         if(enableButtons){
             Row( modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .background(Color.Green),
+                    .constrainAs(buttons){
+                        bottom.linkTo(parent.bottom)
+                        top.linkTo(stack.bottom)
+                    },
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
             ){
@@ -93,6 +96,9 @@ fun CardStack(modifier : Modifier = Modifier,
         }
 
         Box(modifier = Modifier
+                .constrainAs(stack){
+                    top.linkTo(parent.top)
+                }
                 .draggableStack(
                         controller = cardStackController,
                         thresholdConfig = thresholdConfig,
@@ -104,7 +110,9 @@ fun CardStack(modifier : Modifier = Modifier,
                         onSwipeRight = {
                             onSwipeRight(items[i])
                             i--
-                        })
+                        }
+                )
+                .fillMaxHeight(0.8f)
         ){
             items.asReversed().forEachIndexed{ index, item ->
                 Card(modifier = Modifier
@@ -131,7 +139,7 @@ fun Card(
         modifier: Modifier = Modifier,
         item: Item = Item()
 ){
-    Stack(
+    Box(
             modifier
     ){
         if(item.url != null){
@@ -182,41 +190,4 @@ fun Modifier.moveTo(
         layout(0, 0) {}
     }
 })
-
-@Composable
-fun InvertedColumn(
-        modifier: Modifier = Modifier,
-        content: @Composable() () -> Unit
-) {
-    Layout(
-            modifier = modifier,
-            children = content
-    ) { measurables, constraints ->
-
-        val childConstraints = constraints.copy(minWidth = 0, minHeight = 0)
-        val placeables = measurables.map{ measurable ->
-            measurable.measure(childConstraints)
-        }
-
-
-        var yPosition = constraints.maxHeight
-
-        // Set the size of the layout as big as it can
-        layout(constraints.maxWidth, constraints.maxHeight) {
-            // Track the y co-ord we have placed children up to
-
-            // Place children in the parent layout
-            placeables.forEach { placeable ->
-                // Record the y co-ord placed up to
-                yPosition -= placeable.height
-
-                // Position item on the screen
-                placeable.placeRelative(x = 0, y = yPosition)
-
-            }
-
-        }
-    }
-}
-
 
