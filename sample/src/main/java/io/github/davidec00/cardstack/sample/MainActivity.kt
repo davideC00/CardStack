@@ -35,7 +35,6 @@ class MainActivity : AppCompatActivity(){
         )
         val items = mutableListOf(item1, item2, item3, item4)
         super.onCreate(savedInstanceState)
-        //val imagesIds = mutableListOf(R.drawable.pic1, R.drawable.pic2)
 
         setContent {
             CardStack(
@@ -47,17 +46,7 @@ class MainActivity : AppCompatActivity(){
     }
 }
 
-fun Modifier.visibility(value: Boolean = true) = this.then(Modifier.layout{ measurable, constraints ->
-    val placeable = measurable.measure(constraints)
-    if(value){
-        layout(placeable.width, placeable.height) {
-            placeable.placeRelative(0,0)
-        }
-    }else{
-        layout(0, 0) {}
-    }
 
-})
 
 
 

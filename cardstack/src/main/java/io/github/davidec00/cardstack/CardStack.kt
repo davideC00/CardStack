@@ -57,11 +57,20 @@ fun CardStack(modifier : Modifier = Modifier,
               onEmptyStack : ( lastItem : Item) -> Unit = {}
 ){
 
-    val cardStackController = rememberCardStackController()
     var i by remember { mutableStateOf(items.size-1)}
 
     if( i == -1 ){
         onEmptyStack( items.last() )
+    }
+
+    val cardStackController = rememberCardStackController()
+    cardStackController.onSwipeLeft = {
+        onSwipeLeft(items[i])
+        i--
+    }
+    cardStackController.onSwipeRight = {
+        onSwipeRight(items[i])
+        i--
     }
 
     ConstraintLayout(modifier = modifier.fillMaxSize().padding(20.dp)) {
@@ -78,17 +87,17 @@ fun CardStack(modifier : Modifier = Modifier,
                     verticalAlignment = Alignment.CenterVertically
             ){
                 FloatingActionButton(
-                        onClick = { cardStackController.swipeLeft() },
+                        onClick = { if (i >= 0) cardStackController.swipeLeft() },
                         backgroundColor = Color.White,
-                        elevation = 1.dp
+                        elevation = 5.dp
                 ) {
                     Icon(Icons.Filled.ThumbDownAlt, tint = Color.Red)
                 }
                 Spacer( modifier = Modifier.width(70.dp))
                 FloatingActionButton(
-                        onClick = { cardStackController.swipeRight() },
+                        onClick = { if (i >= 0) cardStackController.swipeRight() },
                         backgroundColor = Color.White,
-                        elevation = 1.dp
+                        elevation = 5.dp
                 ) {
                     Icon(Icons.Filled.ThumbUpAlt, tint = Color.Green)
                 }
@@ -102,15 +111,7 @@ fun CardStack(modifier : Modifier = Modifier,
                 .draggableStack(
                         controller = cardStackController,
                         thresholdConfig = thresholdConfig,
-                        velocityThreshold = velocityThreshold,
-                        onSwipeLeft = {
-                            onSwipeLeft(items[i])
-                            i--
-                        },
-                        onSwipeRight = {
-                            onSwipeRight(items[i])
-                            i--
-                        }
+                        velocityThreshold = velocityThreshold
                 )
                 .fillMaxHeight(0.8f)
         ){
@@ -158,12 +159,12 @@ fun Card(
             Text(text = item.text,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp,
+                    fontSize = 25.sp,
                     modifier = Modifier.clickable(onClick = {}, indication = null) // disable the highlight of the text when dragging
             )
             Text(text = item.subText,
                     color = Color.White,
-                    fontSize = 15.sp,
+                    fontSize = 20.sp,
                     modifier = Modifier.clickable(onClick = {}, indication = null) // disable the highlight of the text when dragging
             )
         }

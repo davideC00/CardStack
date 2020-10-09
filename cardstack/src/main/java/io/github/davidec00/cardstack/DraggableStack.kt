@@ -71,20 +71,20 @@ open class CardStackController(
     }
 
     /**
-     * The current position (in pixels) of the [draggableStack].
+     * The current position (in pixels) of the First Card.
      */
     val offsetX = AnimatedFloatModel(0f, animationClockProxy)
     val offsetY = AnimatedFloatModel(0f, animationClockProxy)
 
     /**
-     * The current rotation (in pixels) of the [draggableStack].
+     * The current rotation (in pixels) of the First Card.
      */
     val rotation = AnimatedFloatModel(0f, animationClockProxy)
 
     /**
      * The current scale factor (in pixels) of the Card before the first one displayed.
      */
-    val scale = AnimatedFloatModel(1f, animationClockProxy)
+    val scale = AnimatedFloatModel(0.8f, animationClockProxy)
 
     var onSwipeLeft : () -> Unit = {}
     var onSwipeRight: () -> Unit = {}
@@ -97,8 +97,9 @@ open class CardStackController(
             offsetX.snapTo(center.x)
             offsetY.snapTo(0f)
             rotation.snapTo(0f)
+            scale.snapTo(0.8f)
         }
-        scale.animateTo(1f)
+        scale.animateTo(1f, animationSpec)
     }
 
     fun swipeRight(){
@@ -108,15 +109,16 @@ open class CardStackController(
             offsetX.snapTo(center.x)
             offsetY.snapTo(0f)
             rotation.snapTo(0f)
+            scale.snapTo(0.8f)
         }
-        scale.animateTo(1f)
+        scale.animateTo(1f, animationSpec)
     }
 
     fun returnCenter(){
         offsetX.animateTo(center.x, animationSpec)
         offsetY.animateTo(center.y, animationSpec)
         rotation.animateTo(0f, animationSpec)
-        scale.animateTo(1f, animationSpec)
+        scale.animateTo(0.8f, animationSpec)
     }
 
 }
@@ -151,16 +153,12 @@ fun rememberCardStackController(
  * that takes two float and returns the threshold between them in the form of a [ThresholdConfig].
  * @param velocityThreshold The threshold (in dp per second) that the end velocity has to exceed
  * in order to swipe, even if the positional [thresholds] have not been reached.
- * @param onSwipeLeft Lambda that executes when the animation of swiping left is finished
- * @param onSwipeRight Lambda that executes when the animation of swiping right is finished
  */
 @ExperimentalMaterialApi
 fun Modifier.draggableStack(
     controller: CardStackController,
     thresholdConfig: (Float, Float) -> ThresholdConfig,
-    velocityThreshold: Dp = 125.dp,
-    onSwipeLeft: () -> Unit = {},
-    onSwipeRight: () -> Unit = {}
+    velocityThreshold: Dp = 125.dp
 ) = composed {
     val density = DensityAmbient.current
     val velocityThresholdPx = with(density) { velocityThreshold.toPx() }
@@ -170,8 +168,6 @@ fun Modifier.draggableStack(
         }
     }
     controller.threshold = thresholds(controller.center.x, controller.right.x)
-    controller.onSwipeRight = onSwipeRight
-    controller.onSwipeLeft = onSwipeLeft
     val draggable = Modifier.rawDragGestureFilter(
             object: DragObserver {
                 override fun onStop(velocity: Offset) {

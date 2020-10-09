@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawShadow
 import androidx.compose.ui.drawLayer
+import androidx.compose.ui.layout
 import androidx.compose.ui.platform.AnimationClockAmbient
 import androidx.compose.ui.platform.ConfigurationAmbient
 import androidx.compose.ui.platform.DensityAmbient
@@ -20,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import io.github.davidec00.cardstack.*
 import io.github.davidec00.cardstack.draggableCard.draggableCard
 import io.github.davidec00.cardstack.draggableCard.rememberDraggableCardController
-import io.github.davidec00.cardstack.sample.visibility
 import kotlin.math.abs
 
 
@@ -101,4 +101,15 @@ fun DraggableCard(
     }
 }
 
+fun Modifier.visibility(value: Boolean = true) = this.then(Modifier.layout{ measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    if(value){
+        layout(placeable.width, placeable.height) {
+            placeable.placeRelative(0,0)
+        }
+    }else{
+        layout(0, 0) {}
+    }
+
+})
 
