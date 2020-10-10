@@ -1,6 +1,5 @@
 package io.github.davidec00.cardstack
 
-import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Box
@@ -24,10 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawShadow
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.id
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.constrainWidth
 import dev.chrisbanes.accompanist.coil.CoilImage
 import kotlin.math.roundToInt
 
@@ -119,9 +116,9 @@ fun CardStack(modifier : Modifier = Modifier,
                 Card(modifier = Modifier
                         .moveTo(
                                 x = if (index == i) cardStackController.offsetX.value else 0f,
-                                y = if (index == i) cardStackController.offsetY.value else 0f,
-                                visible = index == i || index == i - 1
+                                y = if (index == i) cardStackController.offsetY.value else 0f
                         )
+                        .visible( visible = index == i || index == i - 1)
                         .drawLayer(
                                 rotationZ = if (index == i) cardStackController.rotation.value else 0f,
                                 scaleX = if (index < i) cardStackController.scale.value else 1f,
@@ -179,13 +176,21 @@ data class Item(
 
 fun Modifier.moveTo(
     x: Float,
-    y: Float,
-    visible: Boolean = true
+    y: Float
+) = this.then(Modifier.layout{measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    layout(placeable.width, placeable.height){
+        placeable.placeRelative(x.roundToInt(),y.roundToInt())
+    }
+})
+
+fun Modifier.visible(
+        visible: Boolean = true
 ) = this.then(Modifier.layout{measurable, constraints ->
     val placeable = measurable.measure(constraints)
     if(visible){
         layout(placeable.width, placeable.height){
-            placeable.placeRelative(x.roundToInt(),y.roundToInt())
+            placeable.placeRelative(0,0)
         }
     }else{
         layout(0, 0) {}
