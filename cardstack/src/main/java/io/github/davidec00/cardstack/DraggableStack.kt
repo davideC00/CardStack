@@ -1,30 +1,20 @@
 package io.github.davidec00.cardstack
 
-//import androidx.compose.animation.AnimatedFloatModel
-//import androidx.compose.animation.asDisposableClock
-//import androidx.compose.animation.core.AnimationClockObservable
-//import androidx.compose.animation.core.AnimationClockObserver
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.SwipeableDefaults
-//import androidx.compose.material.SwipeableConstants
 import androidx.compose.material.ThresholdConfig
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-//import androidx.compose.ui.gesture.DragObserver
-//import androidx.compose.ui.gesture.rawDragGestureFilter
-//import androidx.compose.ui.onPositioned
-//import androidx.compose.ui.platform.AnimationClockAmbient
-//import androidx.compose.ui.platform.ConfigurationAmbient
-//import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -238,6 +228,13 @@ fun Modifier.draggableStack(
     velocityThreshold: Dp = 125.dp
 ): Modifier = composed {
     val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val velocityThresholdPx = with(density) { velocityThreshold.toPx() }
+    val thresholds = { a: Float, b: Float ->
+        with(thresholdConfig(a,b)){
+            density.computeThreshold(a,b)
+        }
+    }
     Modifier.pointerInput(Unit) {
         detectDragGestures(
             onDragEnd = {
@@ -245,22 +242,10 @@ fun Modifier.draggableStack(
                 }
             },
             onDrag = { change, dragAmount ->
-//                val original = Offset(state.offsetX.targetValue, state.offsetY.targetValue)
-//                val summed = original + dragAmount
-//                val newValue = Offset(
-//                    x = summed.x.coerceIn(-state.maxWidth, state.maxWidth),
-//                    y = summed.y.coerceIn(-state.maxHeight, state.maxHeight)
-//                )
-//                change.consumePositionChange()
-//                state.drag(scope, newValue.x, newValue.y)
+
+                change.consumePositionChange()
             }
         )
-        /**
-         * Doing translation on the graphics layer
-         * which mimics the rotation and translation of tinder swipeable card. This can be improved
-         * if I start swiping a card it first rotates along edges left or right according to drag and
-         * slowly decrease alpha to look it more like dismissing
-         */
     }
 }
 /**
