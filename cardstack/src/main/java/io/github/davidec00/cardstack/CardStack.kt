@@ -4,10 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.FractionalThreshold
-import androidx.compose.material.ThresholdConfig
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ThumbDownAlt
 import androidx.compose.material.icons.filled.ThumbUpAlt
@@ -21,11 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawShadow
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import dev.chrisbanes.accompanist.coil.CoilImage
+import androidx.constraintlayout.compose.ConstraintLayout
+import coil.compose.AsyncImage
 import kotlin.math.roundToInt
 
 /**
@@ -86,17 +86,17 @@ fun CardStack(modifier : Modifier = Modifier,
                 FloatingActionButton(
                         onClick = { if (i >= 0) cardStackController.swipeLeft() },
                         backgroundColor = Color.White,
-                        elevation = 5.dp
+                        elevation = FloatingActionButtonDefaults.elevation(5.dp)
                 ) {
-                    Icon(Icons.Filled.ThumbDownAlt, tint = Color.Red)
+                    Icon(Icons.Filled.ThumbDownAlt, contentDescription = "", tint = Color.Red)
                 }
                 Spacer( modifier = Modifier.width(70.dp))
                 FloatingActionButton(
                         onClick = { if (i >= 0) cardStackController.swipeRight() },
                         backgroundColor = Color.White,
-                        elevation = 5.dp
+                        elevation = FloatingActionButtonDefaults.elevation(5.dp)
                 ) {
-                    Icon(Icons.Filled.ThumbUpAlt, tint = Color.Green)
+                    Icon(Icons.Filled.ThumbUpAlt,contentDescription = "", tint = Color.Green)
                 }
             }
         }
@@ -119,12 +119,12 @@ fun CardStack(modifier : Modifier = Modifier,
                                 y = if (index == i) cardStackController.offsetY.value else 0f
                         )
                         .visible( visible = index == i || index == i - 1)
-                        .drawLayer(
+                        .graphicsLayer(
                                 rotationZ = if (index == i) cardStackController.rotation.value else 0f,
                                 scaleX = if (index < i) cardStackController.scale.value else 1f,
                                 scaleY = if (index < i) cardStackController.scale.value else 1f
                         )
-                        .drawShadow(4.dp, RoundedCornerShape(10.dp)),
+                        .shadow(4.dp, RoundedCornerShape(10.dp)),
                         item
                 )
             }
@@ -141,8 +141,9 @@ fun Card(
             modifier
     ){
         if(item.url != null){
-            CoilImage(
-                    data = item.url,
+            AsyncImage(
+                model = item.url,
+                contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                             .fillMaxSize()
@@ -157,12 +158,12 @@ fun Card(
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 25.sp,
-                    modifier = Modifier.clickable(onClick = {}, indication = null) // disable the highlight of the text when dragging
+                    modifier = Modifier.clickable(onClick = {}) // disable the highlight of the text when dragging
             )
             Text(text = item.subText,
                     color = Color.White,
                     fontSize = 20.sp,
-                    modifier = Modifier.clickable(onClick = {}, indication = null) // disable the highlight of the text when dragging
+                    modifier = Modifier.clickable(onClick = {}) // disable the highlight of the text when dragging
             )
         }
     }

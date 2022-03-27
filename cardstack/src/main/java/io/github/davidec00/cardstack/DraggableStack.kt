@@ -1,29 +1,34 @@
 package io.github.davidec00.cardstack
 
-import androidx.compose.animation.AnimatedFloatModel
-import androidx.compose.animation.asDisposableClock
-import androidx.compose.animation.core.AnimationClockObservable
-import androidx.compose.animation.core.AnimationClockObserver
+//import androidx.compose.animation.AnimatedFloatModel
+//import androidx.compose.animation.asDisposableClock
+//import androidx.compose.animation.core.AnimationClockObservable
+//import androidx.compose.animation.core.AnimationClockObserver
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.SwipeableConstants
+import androidx.compose.material.SwipeableDefaults
+//import androidx.compose.material.SwipeableConstants
 import androidx.compose.material.ThresholdConfig
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.gesture.DragObserver
-import androidx.compose.ui.gesture.rawDragGestureFilter
-import androidx.compose.ui.onPositioned
-import androidx.compose.ui.platform.AnimationClockAmbient
-import androidx.compose.ui.platform.ConfigurationAmbient
-import androidx.compose.ui.platform.DensityAmbient
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+//import androidx.compose.ui.gesture.DragObserver
+//import androidx.compose.ui.gesture.rawDragGestureFilter
+//import androidx.compose.ui.onPositioned
+//import androidx.compose.ui.platform.AnimationClockAmbient
+//import androidx.compose.ui.platform.ConfigurationAmbient
+//import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.sign
 
@@ -35,9 +40,10 @@ import kotlin.math.sign
  * @param animationSpec The default animation that will be used to animate swipes.
  */
 open class CardStackController(
-    clock: AnimationClockObservable,
+//    clock: AnimationClockObservable,
+    val scope : CoroutineScope,
     private val screenWidth: Float,
-    internal val animationSpec: AnimationSpec<Float> = SwipeableConstants.DefaultAnimationSpec
+    internal val animationSpec: AnimationSpec<Float> = SwipeableDefaults.AnimationSpec
 ) {
     /**
      * Whether the state is currently animating.
@@ -58,67 +64,88 @@ open class CardStackController(
     var threshold: Float = 0.0f
 
     // May Change
-    private val animationClockProxy: AnimationClockObservable = object : AnimationClockObservable {
-        override fun subscribe(observer: AnimationClockObserver) {
-            isAnimationRunning = true
-            clock.subscribe(observer)
-        }
-
-        override fun unsubscribe(observer: AnimationClockObserver) {
-            isAnimationRunning = false
-            clock.unsubscribe(observer)
-        }
-    }
+//    private val animationClockProxy: AnimationClockObservable = object : AnimationClockObservable {
+//        override fun subscribe(observer: AnimationClockObserver) {
+//            isAnimationRunning = true
+//            clock.subscribe(observer)
+//        }
+//
+//        override fun unsubscribe(observer: AnimationClockObserver) {
+//            isAnimationRunning = false
+//            clock.unsubscribe(observer)
+//        }
+//    }
 
     /**
      * The current position (in pixels) of the First Card.
      */
-    val offsetX = AnimatedFloatModel(0f, animationClockProxy)
-    val offsetY = AnimatedFloatModel(0f, animationClockProxy)
+    val offsetX = Animatable(0f)
+    val offsetY = Animatable(0f)
 
     /**
      * The current rotation (in pixels) of the First Card.
      */
-    val rotation = AnimatedFloatModel(0f, animationClockProxy)
+    val rotation = Animatable(0f)
 
     /**
      * The current scale factor (in pixels) of the Card before the first one displayed.
      */
-    val scale = AnimatedFloatModel(0.8f, animationClockProxy)
+    val scale = Animatable(0.8f)
 
     var onSwipeLeft : () -> Unit = {}
     var onSwipeRight: () -> Unit = {}
 
 
     fun swipeLeft(){
-        offsetX.animateTo(-screenWidth, animationSpec) { endReason, endOffset ->
-            onSwipeLeft()
-            // After the animation of swiping return back to Center to make it look like a cycle
-            offsetX.snapTo(center.x)
-            offsetY.snapTo(0f)
-            rotation.snapTo(0f)
-            scale.snapTo(0.8f)
+        scope.apply{
+            launch {
+                offsetX.animateTo(-screenWidth, animationSpec) {
+                    onSwipeLeft()
+                    // After the animation of swiping return back to Center to make it look like a cycle
+                    launch{
+                        offsetX.snapTo(center.x)
+                        offsetY.snapTo(0f)
+                        rotation.snapTo(0f)
+                        scale.snapTo(0.8f)
+                    }
+
+                }
+                scale.animateTo(1f, animationSpec)
+
+            }
         }
-        scale.animateTo(1f, animationSpec)
+
     }
 
     fun swipeRight(){
-        offsetX.animateTo(screenWidth, animationSpec) { endReason, endOffset ->
-            onSwipeRight()
-            // After the animation return back to Center to make it look like a cycle
-            offsetX.snapTo(center.x)
-            offsetY.snapTo(0f)
-            rotation.snapTo(0f)
-            scale.snapTo(0.8f)
+        scope.apply{
+            launch {
+                offsetX.animateTo(screenWidth, animationSpec) {
+                    onSwipeRight()
+                    // After the animation return back to Center to make it look like a cycle
+                    launch{
+                        offsetX.snapTo(center.x)
+                        offsetY.snapTo(0f)
+                        rotation.snapTo(0f)
+                        scale.snapTo(0.8f)
+                    }
+
+                }
+                scale.animateTo(1f, animationSpec)
+            }
         }
-        scale.animateTo(1f, animationSpec)
+
     }
 
     fun returnCenter(){
-        offsetX.animateTo(center.x, animationSpec)
-        offsetY.animateTo(center.y, animationSpec)
-        rotation.animateTo(0f, animationSpec)
-        scale.animateTo(0.8f, animationSpec)
+        scope.apply {
+            launch{
+                offsetX.animateTo(center.x, animationSpec)
+                offsetY.animateTo(center.y, animationSpec)
+                rotation.animateTo(0f, animationSpec)
+                scale.animateTo(0.8f, animationSpec)
+            }
+        }
     }
 
 }
@@ -130,15 +157,14 @@ open class CardStackController(
  */
 @Composable
 fun rememberCardStackController(
-        animationSpec: AnimationSpec<Float> = SwipeableConstants.DefaultAnimationSpec,
+        animationSpec: AnimationSpec<Float> = SwipeableDefaults.AnimationSpec,
 ): CardStackController {
-    val clock = AnimationClockAmbient.current.asDisposableClock()
-    val screenWidth = with(DensityAmbient.current){
-        ConfigurationAmbient.current.screenWidthDp.dp.toPx()
-    }
+    val scope = rememberCoroutineScope()
+    val screenWidth =
+        with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     return remember {
         CardStackController(
-                clock = clock,
+                scope = scope,
                 screenWidth = screenWidth,
                 animationSpec = animationSpec
         )
@@ -154,58 +180,89 @@ fun rememberCardStackController(
  * @param velocityThreshold The threshold (in dp per second) that the end velocity has to exceed
  * in order to swipe, even if the positional [thresholds] have not been reached.
  */
-@ExperimentalMaterialApi
+//@ExperimentalMaterialApi
+//fun Modifier.draggableStack(
+//    controller: CardStackController,
+//    thresholdConfig: (Float, Float) -> ThresholdConfig,
+//    velocityThreshold: Dp = 125.dp
+//) = composed {
+//    val density = DensityAmbient.current
+//    val velocityThresholdPx = with(density) { velocityThreshold.toPx() }
+//    val thresholds = { a: Float, b: Float ->
+//        with(thresholdConfig(a,b)){
+//            density.computeThreshold(a,b)
+//        }
+//    }
+//    controller.threshold = thresholds(controller.center.x, controller.right.x)
+//    val draggable = Modifier.rawDragGestureFilter(
+//            object: DragObserver {
+//                override fun onStop(velocity: Offset) {
+//                    super.onStop(velocity)
+//                    if(controller.offsetX.value <= 0f){
+//                        if (velocity.x <= -velocityThresholdPx) {
+//                            controller.swipeLeft()
+//                        } else {
+//                            if (controller.offsetX.value > -controller.threshold) controller.returnCenter()
+//                            else controller.swipeLeft()
+//                        }
+//                    }else{
+//                        if (velocity.x >= velocityThresholdPx) {
+//                            controller.swipeRight()
+//                        } else {
+//                            if (controller.offsetX.value < controller.threshold) controller.returnCenter()
+//                            else controller.swipeRight()
+//                        }
+//                    }
+//                }
+//
+//                override fun onDrag(dragDistance: Offset): Offset {
+//                    if(!controller.isAnimationRunning){
+//                        controller.offsetX.snapTo(controller.offsetX.value + dragDistance.x)
+//                        controller.offsetY.snapTo(controller.offsetY.value + dragDistance.y)
+//                        val targetRotation = normalize(controller.center.x, controller.right.x, abs(controller.offsetX.value), 0f, 10f)
+//                        controller.rotation.snapTo(targetRotation * -controller.offsetX.value.sign)
+//                        controller.scale.snapTo(normalize(controller.center.x, controller.right.x/3, abs(controller.offsetX.value), 0.8f))
+//                    }
+//                    return super.onDrag(dragDistance)
+//                }
+//            },
+//            canStartDragging = {!controller.isAnimationRunning}
+//    )
+//
+//    draggable.onPositioned { }
+//}
+@OptIn(ExperimentalMaterialApi::class)
 fun Modifier.draggableStack(
     controller: CardStackController,
     thresholdConfig: (Float, Float) -> ThresholdConfig,
     velocityThreshold: Dp = 125.dp
-) = composed {
-    val density = DensityAmbient.current
-    val velocityThresholdPx = with(density) { velocityThreshold.toPx() }
-    val thresholds = { a: Float, b: Float ->
-        with(thresholdConfig(a,b)){
-            density.computeThreshold(a,b)
-        }
-    }
-    controller.threshold = thresholds(controller.center.x, controller.right.x)
-    val draggable = Modifier.rawDragGestureFilter(
-            object: DragObserver {
-                override fun onStop(velocity: Offset) {
-                    super.onStop(velocity)
-                    if(controller.offsetX.value <= 0f){
-                        if (velocity.x <= -velocityThresholdPx) {
-                            controller.swipeLeft()
-                        } else {
-                            if (controller.offsetX.value > -controller.threshold) controller.returnCenter()
-                            else controller.swipeLeft()
-                        }
-                    }else{
-                        if (velocity.x >= velocityThresholdPx) {
-                            controller.swipeRight()
-                        } else {
-                            if (controller.offsetX.value < controller.threshold) controller.returnCenter()
-                            else controller.swipeRight()
-                        }
-                    }
-                }
-
-                override fun onDrag(dragDistance: Offset): Offset {
-                    if(!controller.isAnimationRunning){
-                        controller.offsetX.snapTo(controller.offsetX.value + dragDistance.x)
-                        controller.offsetY.snapTo(controller.offsetY.value + dragDistance.y)
-                        val targetRotation = normalize(controller.center.x, controller.right.x, abs(controller.offsetX.value), 0f, 10f)
-                        controller.rotation.snapTo(targetRotation * -controller.offsetX.value.sign)
-                        controller.scale.snapTo(normalize(controller.center.x, controller.right.x/3, abs(controller.offsetX.value), 0.8f))
-                    }
-                    return super.onDrag(dragDistance)
+): Modifier = composed {
+    val scope = rememberCoroutineScope()
+    Modifier.pointerInput(Unit) {
+        detectDragGestures(
+            onDragEnd = {
+                when {
                 }
             },
-            canStartDragging = {!controller.isAnimationRunning}
-    )
-
-    draggable.onPositioned { }
+            onDrag = { change, dragAmount ->
+//                val original = Offset(state.offsetX.targetValue, state.offsetY.targetValue)
+//                val summed = original + dragAmount
+//                val newValue = Offset(
+//                    x = summed.x.coerceIn(-state.maxWidth, state.maxWidth),
+//                    y = summed.y.coerceIn(-state.maxHeight, state.maxHeight)
+//                )
+//                change.consumePositionChange()
+//                state.drag(scope, newValue.x, newValue.y)
+            }
+        )
+        /**
+         * Doing translation on the graphics layer
+         * which mimics the rotation and translation of tinder swipeable card. This can be improved
+         * if I start swiping a card it first rotates along edges left or right according to drag and
+         * slowly decrease alpha to look it more like dismissing
+         */
+    }
 }
-
 /**
  * Min max normalization
  *

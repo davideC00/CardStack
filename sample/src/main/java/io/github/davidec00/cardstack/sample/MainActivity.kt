@@ -1,17 +1,15 @@
 package io.github.davidec00.cardstack.sample
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.ui.*
-import androidx.compose.ui.platform.setContent
-import androidx.compose.ui.unit.dp
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.ui.Modifier
 import io.github.davidec00.cardstack.CardStack
 import io.github.davidec00.cardstack.Item
 
-class MainActivity : AppCompatActivity(){
-    @ExperimentalMaterialApi
+class MainActivity : ComponentActivity(){
+//    @ExperimentalMaterialApi
+    @OptIn(androidx.compose.material.ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         val item1 = Item(
             "https://f4.bcbits.com/img/0020592180_10.jpg",
