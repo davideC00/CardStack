@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
@@ -31,7 +30,7 @@ import kotlin.math.sign
  */
 open class CardStackController(
 //    clock: AnimationClockObservable,
-    val scope : CoroutineScope,
+    val scope: CoroutineScope,
     private val screenWidth: Float,
     internal val animationSpec: AnimationSpec<Float> = SwipeableDefaults.AnimationSpec
 ) {
@@ -82,61 +81,85 @@ open class CardStackController(
      */
     val scale = Animatable(0.8f)
 
-    var onSwipeLeft : () -> Unit = {}
+    var onSwipeLeft: () -> Unit = {}
     var onSwipeRight: () -> Unit = {}
 
 
-    fun swipeLeft(){
-        scope.apply{
+    fun swipeLeft() {
+        scope.apply {
             launch {
                 offsetX.animateTo(-screenWidth, animationSpec) {
                     onSwipeLeft()
                     // After the animation of swiping return back to Center to make it look like a cycle
-                    launch{
+                    launch {
                         offsetX.snapTo(center.x)
+                    }
+                    launch {
                         offsetY.snapTo(0f)
+                    }
+                    launch {
                         rotation.snapTo(0f)
+                    }
+                    launch {
                         scale.snapTo(0.8f)
                     }
 
                 }
-                scale.animateTo(1f, animationSpec)
+                launch {
+                    scale.animateTo(1f, animationSpec)
+                }
+
 
             }
         }
 
     }
 
-    fun swipeRight(){
-        scope.apply{
+    fun swipeRight() {
+        scope.apply {
             launch {
                 offsetX.animateTo(screenWidth, animationSpec) {
                     onSwipeRight()
                     // After the animation return back to Center to make it look like a cycle
-                    launch{
+                    launch {
                         offsetX.snapTo(center.x)
+                    }
+                    launch {
                         offsetY.snapTo(0f)
-                        rotation.snapTo(0f)
+                    }
+                    launch {
                         scale.snapTo(0.8f)
+                    }
+                    launch {
+                        rotation.snapTo(0f)
                     }
 
                 }
+            }
+            launch {
                 scale.animateTo(1f, animationSpec)
             }
         }
 
     }
 
-    fun returnCenter(){
+    fun returnCenter() {
         scope.apply {
-            launch{
+            launch {
                 offsetX.animateTo(center.x, animationSpec)
+            }
+            launch {
                 offsetY.animateTo(center.y, animationSpec)
+            }
+            launch {
                 rotation.animateTo(0f, animationSpec)
+            }
+            launch {
                 scale.animateTo(0.8f, animationSpec)
             }
         }
     }
+
 
 }
 
@@ -147,16 +170,16 @@ open class CardStackController(
  */
 @Composable
 fun rememberCardStackController(
-        animationSpec: AnimationSpec<Float> = SwipeableDefaults.AnimationSpec,
+    animationSpec: AnimationSpec<Float> = SwipeableDefaults.AnimationSpec,
 ): CardStackController {
     val scope = rememberCoroutineScope()
     val screenWidth =
         with(LocalDensity.current) { LocalConfiguration.current.screenWidthDp.dp.toPx() }
     return remember {
         CardStackController(
-                scope = scope,
-                screenWidth = screenWidth,
-                animationSpec = animationSpec
+            scope = scope,
+            screenWidth = screenWidth,
+            animationSpec = animationSpec
         )
     }
 }
@@ -231,23 +254,60 @@ fun Modifier.draggableStack(
     val density = LocalDensity.current
     val velocityThresholdPx = with(density) { velocityThreshold.toPx() }
     val thresholds = { a: Float, b: Float ->
-        with(thresholdConfig(a,b)){
-            density.computeThreshold(a,b)
+        with(thresholdConfig(a, b)) {
+            density.computeThreshold(a, b)
         }
     }
+
+    controller.threshold = thresholds(controller.center.x, controller.right.x)
     Modifier.pointerInput(Unit) {
         detectDragGestures(
             onDragEnd = {
-                when {
+                if (controller.offsetX.value <= 0f) {
+//                        if (dra.x <= -velocityThresholdPx) {
+//                            controller.swipeLeft()
+//                        } else {
+                    if (controller.offsetX.value > -controller.threshold) controller.returnCenter()
+                    else controller.swipeLeft()
+                    //  }
+                } else {
+//                        if (velocity.x >= velocityThresholdPx) {
+//                            controller.swipeRight()
+//                        } else {
+                    if (controller.offsetX.value < controller.threshold) controller.returnCenter()
+                    else controller.swipeRight()
+                    // }
                 }
             },
             onDrag = { change, dragAmount ->
-
+                controller.scope.apply {
+                    launch {
+                        controller.offsetX.snapTo(controller.offsetX.value + dragAmount.x)
+                        controller.offsetY.snapTo(controller.offsetY.value + dragAmount.y)
+                        val targetRotation = normalize(
+                            controller.center.x,
+                            controller.right.x,
+                            abs(controller.offsetX.value),
+                            0f,
+                            10f
+                        )
+                        controller.rotation.snapTo(targetRotation * -controller.offsetX.value.sign)
+                        controller.scale.snapTo(
+                            normalize(
+                                controller.center.x,
+                                controller.right.x / 3,
+                                abs(controller.offsetX.value),
+                                0.8f
+                            )
+                        )
+                    }
+                }
                 change.consumePositionChange()
             }
         )
     }
 }
+
 /**
  * Min max normalization
  *
@@ -257,10 +317,16 @@ fun Modifier.draggableStack(
  * @param startRange Transform the normalized value with a particular start range
  * @param endRange Transform the normalized value with a particular end range
  */
-fun normalize (min: Float, max: Float , v: Float, startRange: Float = 0f, endRange: Float = 1f): Float{
-    require(startRange < endRange){
+fun normalize(
+    min: Float,
+    max: Float,
+    v: Float,
+    startRange: Float = 0f,
+    endRange: Float = 1f
+): Float {
+    require(startRange < endRange) {
         "Start range is greater than End range"
     }
     val value = v.coerceIn(min, max)
-    return ( value - min )/( max - min )*(endRange - startRange ) + startRange
+    return (value - min) / (max - min) * (endRange - startRange) + startRange
 }
