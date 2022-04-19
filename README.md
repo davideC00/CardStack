@@ -1,5 +1,5 @@
 # CardStack
-![Compose Version](https://img.shields.io/badge/Jetpack%20Compose-1.0.0--alpha04-brightgreen)
+![Compose Version](https://img.shields.io/badge/Jetpack%20Compose-1.1.1-brightgreen)
 
 ## Table of contents
 - [Description](#description)
