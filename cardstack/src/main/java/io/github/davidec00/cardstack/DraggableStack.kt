@@ -88,28 +88,27 @@ open class CardStackController(
     fun swipeLeft() {
         scope.apply {
             launch {
-                offsetX.animateTo(-screenWidth, animationSpec) {
-                    onSwipeLeft()
-                    // After the animation of swiping return back to Center to make it look like a cycle
-                    launch {
-                        offsetX.snapTo(center.x)
-                    }
-                    launch {
-                        offsetY.snapTo(0f)
-                    }
-                    launch {
-                        rotation.snapTo(0f)
-                    }
-                    launch {
-                        scale.snapTo(0.8f)
-                    }
+                offsetX.animateTo(-screenWidth, animationSpec)
 
+                onSwipeLeft()
+
+                // After the animation of swiping return back to Center to make it look like a cycle
+                launch {
+                    offsetX.snapTo(center.x)
                 }
                 launch {
-                    scale.animateTo(1f, animationSpec)
+                    offsetY.snapTo(0f)
                 }
+                launch {
+                    rotation.snapTo(0f)
+                }
+                launch {
+                    scale.snapTo(0.8f)
+                }
+            }
 
-
+            launch {
+                scale.animateTo(1f, animationSpec)
             }
         }
 
@@ -118,24 +117,24 @@ open class CardStackController(
     fun swipeRight() {
         scope.apply {
             launch {
-                offsetX.animateTo(screenWidth, animationSpec) {
-                    onSwipeRight()
-                    // After the animation return back to Center to make it look like a cycle
-                    launch {
-                        offsetX.snapTo(center.x)
-                    }
-                    launch {
-                        offsetY.snapTo(0f)
-                    }
-                    launch {
-                        scale.snapTo(0.8f)
-                    }
-                    launch {
-                        rotation.snapTo(0f)
-                    }
+                offsetX.animateTo(screenWidth, animationSpec)
 
+                onSwipeRight()
+                // After the animation return back to Center to make it look like a cycle
+                launch {
+                    offsetX.snapTo(center.x)
+                }
+                launch {
+                    offsetY.snapTo(0f)
+                }
+                launch {
+                    scale.snapTo(0.8f)
+                }
+                launch {
+                    rotation.snapTo(0f)
                 }
             }
+
             launch {
                 scale.animateTo(1f, animationSpec)
             }
