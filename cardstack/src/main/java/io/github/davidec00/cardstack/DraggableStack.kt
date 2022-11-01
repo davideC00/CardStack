@@ -10,7 +10,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -34,12 +33,6 @@ open class CardStackController(
     private val screenWidth: Float,
     internal val animationSpec: AnimationSpec<Float> = SwipeableDefaults.AnimationSpec
 ) {
-    /**
-     * Whether the state is currently animating.
-     */
-    var isAnimationRunning: Boolean by mutableStateOf(false)
-        private set
-
     /**
      * Anchors
      */
@@ -249,9 +242,7 @@ fun Modifier.draggableStack(
     thresholdConfig: (Float, Float) -> ThresholdConfig,
     velocityThreshold: Dp = 125.dp
 ): Modifier = composed {
-    val scope = rememberCoroutineScope()
     val density = LocalDensity.current
-    val velocityThresholdPx = with(density) { velocityThreshold.toPx() }
     val thresholds = { a: Float, b: Float ->
         with(thresholdConfig(a, b)) {
             density.computeThreshold(a, b)
@@ -301,7 +292,7 @@ fun Modifier.draggableStack(
                         )
                     }
                 }
-                change.consumePositionChange()
+                change.consume()
             }
         )
     }
